@@ -1,0 +1,53 @@
+name: StormAuth
+version: 1.7.0
+main: dev.storm.stormauth.StormAuthPlugin
+api-version: '1.21'
+folia-supported: true
+author: StormOops
+description: Авторизация для оффлайн-серверов с авто-входом bedrock через Geyser/Floodgate
+softdepend: [floodgate, Geyser, PlaceholderAPI]
+commands:
+  login:
+    description: Войти в аккаунт
+    usage: /login <пароль>
+    aliases: [l]
+  register:
+    description: Создать аккаунт
+    usage: /register <пароль> <пароль>
+    aliases: [reg]
+  changepassword:
+    description: Сменить пароль
+    usage: /changepassword <старый> <новый> <новый>
+    aliases: [changepass]
+  logout:
+    description: Выйти из аккаунта и сбросить сессию
+    usage: /logout
+  captcha:
+    description: Ввести код капчи
+    usage: /captcha <код>
+  link:
+    description: Привязать аккаунт к telegram/vk
+    usage: /link <telegram|vk>
+  unlink:
+    description: Отвязать telegram/vk
+    usage: /unlink <telegram|vk>
+  recovery:
+    description: Сброс пароля через привязанную соцсеть
+    usage: /recovery [код] [новый пароль]
+  2fa:
+    description: Ввести код двухфакторной защиты
+    usage: /2fa <код>
+  2fasetup:
+    description: Настроить двухфакторную защиту
+    usage: /2fasetup [код]
+  stormauth:
+    description: Управление StormAuth
+    usage: /stormauth <reload|unregister|changepassword|reset2fa|info|import>
+    aliases: [sa]
+permissions:
+  stormauth.admin:
+    description: Доступ к /stormauth
+    default: op
+  stormauth.totp.required:
+    description: Игрок обязан включить и проходить 2fa
+    default: false

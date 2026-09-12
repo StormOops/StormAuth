@@ -1,0 +1,83 @@
+# язык консоли и неподдерживаемых локалей (ru/en)
+default-language: ru
+
+# повторный заход без пароля, пока жива сессия
+session-timeout-minutes: 10
+# сессия привязана к ip; false - выход для динамических ip, но менее безопасно
+session-check-ip: true
+# bedrock-игроки через geyser/floodgate уже авторизованы в xbox live - пароль не спрашиваем
+geyser-skip-auth: true
+# кик за бездействие до входа, 0 - выключено
+auth-timeout-seconds: 30
+# 0 - без лимита
+max-accounts-per-ip: 3
+password:
+  min-length: 6
+  max-length: 32
+# неверных попыток входа до кика
+max-login-attempts: 3
+# код привязки/сброса сгорает после стольких неверных вводов
+max-code-attempts: 5
+weak-passwords:
+  - password
+  - 123456
+  - qwerty
+  - 111111
+  - 12345678
+  - abc123
+
+# хранилище аккаунтов: yaml, sqlite или mysql
+storage: yaml
+mysql:
+  host: 127.0.0.1
+  port: 3306
+  database: stormauth
+  user: root
+  password: ""
+
+# аудит безопасности в security-<дата>.log, по файлу на день
+security-log:
+  enabled: true
+
+totp:
+  enabled: true
+
+# временный бан ip после серии киков за неверные пароли
+bruteforce:
+  enabled: true
+  kicks-before-ban: 2
+  ban-minutes: 15
+
+captcha:
+  enabled: false
+  # печатать код капчи в консоль - только для отладки
+  debug-code: false
+
+# заголовок и bossbar с обратным отсчетом до кика
+prompt:
+  title: true
+  bossbar: true
+
+antivpn:
+  enabled: false
+  # ip-api (без ключа) или proxycheck (нужен ключ)
+  provider: ip-api
+  proxycheck-key: ""
+  block-hosting: false
+  cache-minutes: 60
+  # fail-open: при недоступном api игроков пускаем
+  fail-open: true
+
+premium-autologin:
+  enabled: false
+  # не выключайте на оффлайн-сервере: ник сам по себе не доказывает владение аккаунтом
+  require-same-ip: true
+
+telegram:
+  enabled: false
+  bot-token: ""
+vk:
+  enabled: false
+  # ключ сообщества с правом на сообщения, сообщения группы должны быть включены
+  access-token: ""
+  group-id: 0
