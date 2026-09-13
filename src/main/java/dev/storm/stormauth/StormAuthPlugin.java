@@ -76,6 +76,7 @@ public final class StormAuthPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new AuthGateListener(this), this);
+        getServer().getPluginManager().registerEvents(captchaManager, this);
 
         command("login", new LoginCommand(this));
         command("register", new RegisterCommand(this));

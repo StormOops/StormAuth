@@ -8,6 +8,9 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapCanvas;
@@ -21,10 +24,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class CaptchaManager {
+public final class CaptchaManager implements Listener {
 
     private static final class Pending {
         private final String code;
@@ -42,6 +46,7 @@ public final class CaptchaManager {
     private final StormAuthPlugin plugin;
     private final Random random = new Random();
     private final Map<UUID, Pending> pending = new ConcurrentHashMap<>();
+    private final Set<UUID> frameIds = ConcurrentHashMap.newKeySet();
 
     public CaptchaManager(StormAuthPlugin plugin) {
         this.plugin = plugin;
@@ -136,6 +141,7 @@ public final class CaptchaManager {
                         stack.setItemMeta(meta);
                         frame.setItem(stack);
                         captcha.frames.add(frame);
+                        frameIds.add(frame.getUniqueId());
                         captcha.frameLocations.add(frameLoc);
                     } catch (RuntimeException e) {
                         plugin.getLogger().warning("рамка капчи не встала: " + e.getMessage());
@@ -145,12 +151,19 @@ public final class CaptchaManager {
         });
     }
 
-    // TODO: рамку капчи может сломать любой залогиненный игрок рядом - надо ловить
-    // HangingBreakByEntityEvent и отменять для наших рамок; пока редкий случай, капчу проще перевыдать
+    @EventHandler(ignoreCancelled = true)
+    public void onFrameBreak(HangingBreakByEntityEvent event) {
+        // свои рамки ломать нельзя: любой залогиненный рядом мог снести чужую капчу
+        if (frameIds.contains(event.getEntity().getUniqueId())) {
+            event.setCancelled(true);
+        }
+    }
+
     private void cleanupFrames(Pending captcha) {
         for (int i = 0; i < captcha.frames.size(); i++) {
             ItemFrame frame = captcha.frames.get(i);
             Location location = captcha.frameLocations.get(i);
+            frameIds.remove(frame.getUniqueId());
             plugin.getServer().getRegionScheduler().run(plugin, location, task -> {
                 if (frame.isValid()) {
                     frame.remove();
