@@ -16,6 +16,8 @@ password:
   max-length: 32
 # неверных попыток входа до кика
 max-login-attempts: 3
+# пауза между попытками /login на игрока, секунд
+login-cooldown-seconds: 2
 # код привязки/сброса сгорает после стольких неверных вводов
 max-code-attempts: 5
 weak-passwords:

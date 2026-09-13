@@ -23,6 +23,7 @@ password-weak: "&cЭтот пароль в черном списке слабы�
 accounts-limit: "&cС этого ip уже создано максимум аккаунтов (%max%)"
 
 wrong-password: "&cНеверный пароль, осталось попыток: %left%"
+login-cooldown: "&cНе так быстро, подождите пару секунд"
 kick-password-limit: "Слишком много неверных попыток"
 
 changepassword-success: "&aПароль изменен"

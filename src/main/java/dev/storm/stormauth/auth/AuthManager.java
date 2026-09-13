@@ -20,6 +20,7 @@ public final class AuthManager {
     private final Set<UUID> pendingTotp = ConcurrentHashMap.newKeySet();
     private final Set<UUID> captchaPassed = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> attempts = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastLoginTry = new ConcurrentHashMap<>();
     private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
 
     public AuthManager(StormAuthPlugin plugin) {
@@ -141,6 +142,15 @@ public final class AuthManager {
             plugin.getMessages().send(player, "totp-code-needed");
             return;
         }
+        // кулдаун до хэширования: без него спам /login гоняет pbkdf2 на 65к итераций и грузит ядра
+        long now = System.currentTimeMillis();
+        Long lastTry = lastLoginTry.get(player.getUniqueId());
+        long cooldown = plugin.getConfig().getLong("login-cooldown-seconds", 2) * 1000;
+        if (lastTry != null && now - lastTry < cooldown) {
+            plugin.getMessages().send(player, "login-cooldown");
+            return;
+        }
+        lastLoginTry.put(player.getUniqueId(), now);
         String ip = ip(player);
         // pbkdf2 на 65к итераций считаем в async - игровой поток не морозим
         plugin.getServer().getAsyncScheduler().runNow(plugin, task -> {
@@ -358,6 +368,7 @@ public final class AuthManager {
         authed.remove(uuid);
         pendingTotp.remove(uuid);
         attempts.remove(uuid);
+        lastLoginTry.remove(uuid);
         captchaPassed.remove(uuid);
         plugin.getTotpService().dropPending(uuid);
     }

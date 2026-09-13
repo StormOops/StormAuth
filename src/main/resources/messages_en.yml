@@ -23,6 +23,7 @@ password-weak: "&cThis password is blacklisted as weak, pick another one"
 accounts-limit: "&cThis ip already has the max number of accounts (%max%)"
 
 wrong-password: "&cWrong password, attempts left: %left%"
+login-cooldown: "&cNot so fast, wait a couple of seconds"
 kick-password-limit: "Too many wrong attempts"
 
 changepassword-success: "&aPassword changed"
