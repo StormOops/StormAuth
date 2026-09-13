@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,11 +36,14 @@ public final class ConfigUpdater {
                     existing.add(key);
                 }
             }
+            String newline = System.lineSeparator();
             StringBuilder missing = new StringBuilder();
+            List<String> pending = new ArrayList<>();
             int i = 0;
             while (i < defaults.length) {
                 String key = topKey(defaults[i]);
-                if (key == null || existing.contains(key)) {
+                if (key == null) {
+                    pending.add(defaults[i]);
                     i++;
                     continue;
                 }
@@ -47,18 +51,34 @@ public final class ConfigUpdater {
                 while (j < defaults.length && topKey(defaults[j]) == null) {
                     j++;
                 }
-                for (int k = i; k < j; k++) {
-                    missing.append(defaults[k]).append(System.lineSeparator());
+                int end = j;
+                while (end > i + 1 && isCommentOrBlank(defaults[end - 1])) {
+                    end--;
+                }
+                if (!existing.contains(key)) {
+                    for (String comment : pending) {
+                        missing.append(comment).append(newline);
+                    }
+                    for (int k = i; k < end; k++) {
+                        missing.append(defaults[k]).append(newline);
+                    }
+                }
+                pending.clear();
+                for (int k = end; k < j; k++) {
+                    pending.add(defaults[k]);
                 }
                 i = j;
             }
             if (missing.length() > 0) {
-                Files.writeString(file.toPath(), System.lineSeparator() + missing,
-                        StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+                Files.writeString(file.toPath(), newline + missing, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
             }
         } catch (Exception e) {
             plugin.getLogger().warning(resourceName + " не обновился: " + e.getMessage());
         }
+    }
+
+    private static boolean isCommentOrBlank(String line) {
+        return line.isBlank() || line.trim().startsWith("#");
     }
 
     private static String topKey(String line) {
