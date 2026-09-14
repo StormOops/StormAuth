@@ -63,7 +63,15 @@ public final class CaptchaManager implements Listener {
         player.getScheduler().run(plugin, task -> {
             Location eye = player.getEyeLocation();
             BlockFace face = facing(eye.getYaw());
-            Location base = eye.toBlockLocation().add(face.getModX() * 2, 0, face.getModZ() * 2);
+            // при крутом pitch yaw скачет от малейшего движения мыши и стена встает криво
+            // или вне поля зрения - подвигаем её по вертикали за взглядом
+            int dy = 0;
+            if (eye.getPitch() > 55f) {
+                dy = -1;
+            } else if (eye.getPitch() < -55f) {
+                dy = 1;
+            }
+            Location base = eye.toBlockLocation().add(face.getModX() * 2, dy, face.getModZ() * 2);
             World world = eye.getWorld();
             // карты создаем на глобальном регионе - folia запрещает createMap с потока чужого региона
             plugin.getServer().getGlobalRegionScheduler().run(plugin, task2 -> {
