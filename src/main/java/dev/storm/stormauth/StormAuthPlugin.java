@@ -96,6 +96,9 @@ public final class StormAuthPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (captchaManager != null) {
+            captchaManager.cleanupAll();
+        }
         if (socialService != null) {
             socialService.shutdown();
         }

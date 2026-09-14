@@ -114,6 +114,20 @@ public final class CaptchaManager implements Listener {
         }
     }
 
+    public void cleanupAll() {
+        // при выключении сервера планировщик задачи уже не исполняет - чистим напрямую,
+        // иначе барьеры и рамки капчи так и остаются висеть в мире
+        for (Pending captcha : pending.values()) {
+            for (ItemFrame frame : captcha.frames) {
+                frame.remove();
+            }
+            for (Map.Entry<Location, Material> entry : captcha.replaced.entrySet()) {
+                entry.getKey().getBlock().setType(entry.getValue(), false);
+            }
+        }
+        pending.clear();
+    }
+
     private void place(Pending captcha, Location base, BlockFace face, List<MapView> views) {
         plugin.getServer().getRegionScheduler().run(plugin, base, task -> {
             World world = base.getWorld();
