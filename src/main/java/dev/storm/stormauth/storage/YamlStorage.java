@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,7 @@ public final class YamlStorage implements Storage {
                 account.setLastIp(section.getString("last-ip", ""));
                 account.setLastLogin(section.getLong("last-login"));
                 account.setRegistered(section.getLong("registered", System.currentTimeMillis()));
+                account.setBackupCodeHashes(new ArrayList<>(section.getStringList("backup-codes")));
                 pending.put(account.getUuid(), account);
             } catch (IllegalArgumentException badKey) {
                 // битый uuid в файле - пропускаем запись, а не падаем
@@ -89,6 +91,7 @@ public final class YamlStorage implements Storage {
             yaml.set(path + ".last-ip", account.getLastIp());
             yaml.set(path + ".last-login", account.getLastLogin());
             yaml.set(path + ".registered", account.getRegistered());
+            yaml.set(path + ".backup-codes", account.getBackupCodeHashes());
         }
         file.getParentFile().mkdirs();
         File tmp = new File(file.getParentFile(), "players.yml.tmp");

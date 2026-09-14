@@ -46,6 +46,9 @@ totp-setup-wrong: "&cCode did not match, check the device clock and try again"
 totp-already: "&c2fa is already enabled"
 totp-not-enabled: "&c2fa is not enabled"
 
+backup-codes: "&eBackup codes in case you lose the authenticator (shown once, write them down): &f%codes%"
+backup-code-used: "&eLogged in with a backup code, codes left: %left%"
+
 link-code: "&eSend the code &f%code% &eto the %platform% bot - the account will link itself"
 link-already: "&c%platform% is already linked"
 link-success: "&aAccount linked to %platform%"

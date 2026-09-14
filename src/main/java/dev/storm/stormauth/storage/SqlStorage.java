@@ -9,8 +9,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -66,7 +69,13 @@ public final class SqlStorage implements Storage {
                     + "vk_id BIGINT NOT NULL DEFAULT -1,"
                     + "last_ip VARCHAR(45) NOT NULL DEFAULT '',"
                     + "last_login BIGINT NOT NULL DEFAULT 0,"
-                    + "registered BIGINT NOT NULL DEFAULT 0)");
+                    + "registered BIGINT NOT NULL DEFAULT 0,"
+                    + "backup_codes TEXT)");
+            // миграция для баз, созданных до backup-кодов: ругань на duplicate column глотаем
+            try {
+                st.executeUpdate("ALTER TABLE accounts ADD COLUMN backup_codes TEXT");
+            } catch (SQLException ignored) {
+            }
         }
     }
 
@@ -75,7 +84,7 @@ public final class SqlStorage implements Storage {
         Map<UUID, PlayerAccount> out = new HashMap<>();
         try (Connection con = connect();
              PreparedStatement ps = con.prepareStatement("SELECT uuid, name, password, totp_secret, totp_enabled,"
-                     + " telegram_id, vk_id, last_ip, last_login, registered FROM accounts");
+                     + " telegram_id, vk_id, last_ip, last_login, registered, backup_codes FROM accounts");
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 PlayerAccount account = new PlayerAccount(
@@ -89,6 +98,7 @@ public final class SqlStorage implements Storage {
                 account.setLastIp(rs.getString("last_ip"));
                 account.setLastLogin(rs.getLong("last_login"));
                 account.setRegistered(rs.getLong("registered"));
+                account.setBackupCodeHashes(splitCodes(rs.getString("backup_codes")));
                 out.put(account.getUuid(), account);
             }
         }
@@ -99,13 +109,13 @@ public final class SqlStorage implements Storage {
     public void save(PlayerAccount account) throws Exception {
         String sql = dialect == Dialect.SQLITE
                 ? "INSERT OR REPLACE INTO accounts (uuid, name, password, totp_secret, totp_enabled,"
-                  + " telegram_id, vk_id, last_ip, last_login, registered) VALUES (?,?,?,?,?,?,?,?,?,?)"
+                  + " telegram_id, vk_id, last_ip, last_login, registered, backup_codes) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
                 : "INSERT INTO accounts (uuid, name, password, totp_secret, totp_enabled,"
-                  + " telegram_id, vk_id, last_ip, last_login, registered) VALUES (?,?,?,?,?,?,?,?,?,?)"
+                  + " telegram_id, vk_id, last_ip, last_login, registered, backup_codes) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
                   + " ON DUPLICATE KEY UPDATE name=VALUES(name), password=VALUES(password),"
                   + " totp_secret=VALUES(totp_secret), totp_enabled=VALUES(totp_enabled),"
                   + " telegram_id=VALUES(telegram_id), vk_id=VALUES(vk_id), last_ip=VALUES(last_ip),"
-                  + " last_login=VALUES(last_login), registered=VALUES(registered)";
+                  + " last_login=VALUES(last_login), registered=VALUES(registered), backup_codes=VALUES(backup_codes)";
         // sqlite однописательная база: конкурентные записи выстраиваем локом, иначе SQLITE_BUSY
         synchronized (writeLock) {
             try (Connection con = connect(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -119,6 +129,7 @@ public final class SqlStorage implements Storage {
                 ps.setString(8, account.getLastIp());
                 ps.setLong(9, account.getLastLogin());
                 ps.setLong(10, account.getRegistered());
+                ps.setString(11, String.join(";", account.getBackupCodeHashes()));
                 ps.executeUpdate();
             }
         }
@@ -133,6 +144,17 @@ public final class SqlStorage implements Storage {
                 ps.executeUpdate();
             }
         }
+    }
+
+    // хэши кодов храним одной строкой через ";" - в pbkdf2-формате этот символ не встречается
+    private static List<String> splitCodes(String raw) {
+        List<String> out = new ArrayList<>();
+        if (raw != null && !raw.isEmpty()) {
+            for (String part : raw.split(";")) {
+                out.add(part);
+            }
+        }
+        return out;
     }
 
     // пула коннектов нет нарочно: записей мало (логин, регистрация, смена пароля)

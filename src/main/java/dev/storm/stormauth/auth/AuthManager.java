@@ -5,6 +5,7 @@ import dev.storm.stormauth.api.PlayerAuthedEvent;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -209,7 +210,20 @@ public final class AuthManager {
             completeAuth(player, account, PlayerAuthedEvent.Reason.TOTP);
             return;
         }
-        failedAttempt(player, "totp-wrong");
+        // backup-код - это pbkdf2 на каждый хэш, гоняем в async, игровой поток не морозим
+        plugin.getServer().getAsyncScheduler().runNow(plugin, task -> {
+            if (!plugin.getTotpService().consumeBackupCode(account, code)) {
+                player.getScheduler().run(plugin, t -> failedAttempt(player, "totp-wrong"), null);
+                return;
+            }
+            player.getScheduler().run(plugin, t -> {
+                pendingTotp.remove(player.getUniqueId());
+                plugin.getSecurityLog().log(player.getName() + " вошел по backup-коду, ip " + ip(player));
+                plugin.getMessages().send(player, "backup-code-used",
+                        "left", String.valueOf(plugin.getTotpService().backupCodesLeft(account)));
+                completeAuth(player, account, PlayerAuthedEvent.Reason.TOTP);
+            }, null);
+        });
     }
 
     public void setupTotp(Player player) {
@@ -248,6 +262,8 @@ public final class AuthManager {
         }
         if (plugin.getTotpService().confirmSetup(player, account, code)) {
             plugin.getMessages().send(player, "totp-setup-success");
+            List<String> codes = plugin.getTotpService().issueBackupCodes(account);
+            plugin.getMessages().send(player, "backup-codes", "codes", String.join(" ", codes));
             plugin.getSecurityLog().log(player.getName() + " включил 2fa, ip " + ip(player));
             plugin.getSocialService().notify(account, "notify-2fa-enabled", "player", account.getName());
             if (!isAuthed(player.getUniqueId())) {

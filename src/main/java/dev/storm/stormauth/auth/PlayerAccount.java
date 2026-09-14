@@ -1,5 +1,7 @@
 package dev.storm.stormauth.auth;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public final class PlayerAccount {
@@ -9,6 +11,7 @@ public final class PlayerAccount {
     private String passwordHash;
     private String totpSecret;
     private boolean totpEnabled;
+    private List<String> backupCodeHashes = new ArrayList<>();
     private long telegramId = -1;
     private long vkId = -1;
     private String lastIp = "";
@@ -55,6 +58,14 @@ public final class PlayerAccount {
 
     public void setTotpEnabled(boolean totpEnabled) {
         this.totpEnabled = totpEnabled;
+    }
+
+    public List<String> getBackupCodeHashes() {
+        return backupCodeHashes;
+    }
+
+    public void setBackupCodeHashes(List<String> backupCodeHashes) {
+        this.backupCodeHashes = backupCodeHashes;
     }
 
     public long getTelegramId() {

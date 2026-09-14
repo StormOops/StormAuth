@@ -46,6 +46,9 @@ totp-setup-wrong: "&cКод не подошел, проверьте время �
 totp-already: "&c2fa уже включена"
 totp-not-enabled: "&c2fa не включена"
 
+backup-codes: "&eBackup-коды на случай потери authenticator (показываются один раз, запишите): &f%codes%"
+backup-code-used: "&eВход по backup-коду, осталось кодов: %left%"
+
 link-code: "&eОтправьте код &f%code% &eботу в %platform% - аккаунт привяжется сам"
 link-already: "&c%platform% уже привязан"
 link-success: "&aАккаунт привязан к %platform%"
