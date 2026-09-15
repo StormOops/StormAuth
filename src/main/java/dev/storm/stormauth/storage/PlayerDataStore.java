@@ -77,7 +77,35 @@ public final class PlayerDataStore {
     // чтение после старта - только из памяти, диск и базу на игровых потоках не трогаем
     public PlayerAccount find(UUID uuid, String name) {
         PlayerAccount account = accounts.get(uuid);
-        return account != null ? account : findByName(name);
+        if (account != null) {
+            return account;
+        }
+        PlayerAccount byName = findByName(name);
+        if (byName != null && !byName.getUuid().equals(uuid)) {
+            reseat(byName, uuid);
+        }
+        return byName;
+    }
+
+    // у записей из authme uuid посчитан от ника в нижнем регистре и не совпадает с реальным -
+    // пересаживаем аккаунт на настоящий uuid при первом входе, иначе он вечно "чужой"
+    private void reseat(PlayerAccount account, UUID realUuid) {
+        UUID importedUuid = account.getUuid();
+        PlayerAccount moved = new PlayerAccount(realUuid, account.getName(), account.getPasswordHash());
+        moved.setTotpSecret(account.getTotpSecret());
+        moved.setTotpEnabled(account.isTotpEnabled());
+        moved.setTelegramId(account.getTelegramId());
+        moved.setVkId(account.getVkId());
+        moved.setLastIp(account.getLastIp());
+        moved.setLastLogin(account.getLastLogin());
+        moved.setRegistered(account.getRegistered());
+        // backup-коды тоже переезжают: на 1.7.0 игрок мог включить 2fa до пересадки,
+        // потеря кодов = локаут при утере authenticator
+        moved.setBackupCodeHashes(account.getBackupCodeHashes());
+        accounts.put(realUuid, moved);
+        remove(importedUuid);
+        saveAsync(moved);
+        plugin.getSecurityLog().log("аккаунт " + moved.getName() + " пересажен с uuid из authme на реальный");
     }
 
     public PlayerAccount findByName(String name) {
