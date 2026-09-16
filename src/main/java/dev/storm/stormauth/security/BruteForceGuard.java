@@ -39,6 +39,9 @@ public final class BruteForceGuard {
     }
 
     public boolean isBanned(String ip) {
+        if (isWhitelisted(ip)) {
+            return false;
+        }
         Long until = bans.get(ip);
         if (until == null) {
             return false;
@@ -62,6 +65,10 @@ public final class BruteForceGuard {
         if (!plugin.getConfig().getBoolean("bruteforce.enabled", true)) {
             return;
         }
+        // за одним nat может сидеть весь дом или общага - доверенные адреса из конфига не баним
+        if (isWhitelisted(ip)) {
+            return;
+        }
         int count = kicks.merge(ip, 1, Integer::sum);
         int limit = plugin.getConfig().getInt("bruteforce.kicks-before-ban", 2);
         if (count < limit) {
@@ -76,6 +83,10 @@ public final class BruteForceGuard {
 
     public void reset(String ip) {
         kicks.remove(ip);
+    }
+
+    private boolean isWhitelisted(String ip) {
+        return plugin.getConfig().getStringList("bruteforce.whitelist").contains(ip);
     }
 
     private void save() {

@@ -49,6 +49,9 @@ bruteforce:
   enabled: true
   kicks-before-ban: 2
   ban-minutes: 15
+  # эти адреса не баним никогда: за одним nat может сидеть весь дом
+  whitelist:
+    - 127.0.0.1
 
 captcha:
   enabled: false
