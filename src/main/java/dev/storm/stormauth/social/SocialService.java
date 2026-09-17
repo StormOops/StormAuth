@@ -131,7 +131,7 @@ public final class SocialService {
         plugin.getDataStore().saveAsync(account);
         plugin.getMessages().send(player, "unlink-success", "platform", platform.id());
         plugin.getSecurityLog().log(account.getName() + " отвязал " + platform.id());
-        notify(account, "notify-unlinked", "platform", platform.id());
+        notify(account, "notify-unlinked", "platform", platform.id(), "player", account.getName());
     }
 
     public void startRecovery(Player player) {
@@ -229,7 +229,7 @@ public final class SocialService {
                     plugin.getMessages().send(player, "link-success", "platform", platform.id()), null);
         }
         plugin.getSecurityLog().log(account.getName() + " привязал " + platform.id());
-        notify(account, "notify-linked", "platform", platform.id());
+        notify(account, "notify-linked", "platform", platform.id(), "player", account.getName());
         plugin.getServer().getGlobalRegionScheduler().run(plugin, task ->
                 plugin.getServer().getPluginManager().callEvent(
                         new PlayerLinkedEvent(account.getUuid(), account.getName(), platform.id())));
