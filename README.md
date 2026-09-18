@@ -73,7 +73,7 @@
 mvn package
 ```
 
-jar лежит в `target/StormAuth-1.7.0.jar`.
+jar лежит в `target/StormAuth-1.8.0.jar`.
 
 ## Установка
 
