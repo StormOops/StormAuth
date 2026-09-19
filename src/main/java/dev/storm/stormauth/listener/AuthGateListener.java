@@ -44,13 +44,12 @@ public final class AuthGateListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (!blocked(event.getPlayer())) {
+        // поворот головы разрешаем, чтобы игрок читал капчу с рамок: hasChangedPosition
+        // отсекает движения мыши до проверки авторизации - мапы не трогаем на каждый пакет
+        if (!event.hasChangedPosition()) {
             return;
         }
-        // поворот головы разрешаем - игроку надо читать капчу с рамок
-        if (event.getTo().getX() != event.getFrom().getX()
-                || event.getTo().getY() != event.getFrom().getY()
-                || event.getTo().getZ() != event.getFrom().getZ()) {
+        if (blocked(event.getPlayer())) {
             event.setCancelled(true);
         }
     }
